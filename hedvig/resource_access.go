@@ -97,8 +97,14 @@ func resourceAccessRead(d *schema.ResourceData, meta interface{}) error {
 
 	sessionID := GetSessionId(d, meta.(*HedvigClient))
 
+        dsplit = strings.Split(d.Id, '-')
+
+        if len(dsplit) < 2 {
+                return errors.New("Improperly formed access id")
+        }
+
 	q := url.Values{}
-	q.Set("request", fmt.Sprintf("{type:GetACLInformation,category:VirtualDiskManagement,params:{virtualDisk:'%s'},sessionId:'%s'}", d.Get("vdisk"), sessionID))
+	q.Set("request", fmt.Sprintf("{type:GetACLInformation,category:VirtualDiskManagement,params:{virtualDisk:'%s'},sessionId:'%s'}", dsplit[1], sessionID))
 
 	u.RawQuery = q.Encode()
 
