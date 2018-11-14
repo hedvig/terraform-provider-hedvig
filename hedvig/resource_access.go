@@ -6,6 +6,7 @@ import (
 	"github.com/hashicorp/terraform/helper/schema"
 	"io/ioutil"
 	"log"
+        "errors"
 	"net/http"
 	"net/url"
 )
@@ -110,12 +111,21 @@ func resourceAccessRead(d *schema.ResourceData, meta interface{}) error {
 		log.Fatal(err)
 	}
 
+	if resp.StatusCode == 404 {
+		d.SetId("")
+		log.Print("Access not found, removing from state")
+	}
+
 	access := AccessResponse{}
 	err = json.Unmarshal(body, &access)
 
 	if err != nil {
 		log.Fatalf("Error unmarshalling: %s", err)
 	}
+
+        if len(access.Result) < 1 {
+                return errors.New("No results returned")
+        }
 
 	d.Set("host", access.Result[0].Host)
 	//d.Set("address", access.Result[0].Initiator[0].Ip)

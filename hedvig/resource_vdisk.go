@@ -106,6 +106,11 @@ func resourceVdiskRead(d *schema.ResourceData, meta interface{}) error {
 		log.Fatal(err)
 	}
 
+	if resp.StatusCode == 404 {
+		d.SetId("")
+		log.Print("Vdisk not found, removing from state")
+	}
+
 	disk := DiskResponse{}
 	err = json.Unmarshal(body, &disk)
 

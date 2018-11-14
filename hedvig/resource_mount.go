@@ -6,6 +6,7 @@ import (
 	"github.com/hashicorp/terraform/helper/schema"
 	"io/ioutil"
 	"log"
+        "errors"
 	"net/http"
 	"net/url"
 )
@@ -88,6 +89,10 @@ func resourceMountRead(d *schema.ResourceData, meta interface{}) error {
 	if err != nil {
 		log.Fatal(err)
 	}
+        if  resp.StatusCode == 404 {
+                d.SetId("")
+		log.Print("Mount not found, removing from state")
+        }
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		log.Fatal(err)
@@ -99,6 +104,10 @@ func resourceMountRead(d *schema.ResourceData, meta interface{}) error {
 	if err != nil {
 		log.Fatalf("Error unmarshalling: %s", err)
 	}
+
+        if len(mount.Result) < 1 {
+                errors.New("Not enough results")
+        }
 
 	d.Set("controller", mount.Result[0])
 

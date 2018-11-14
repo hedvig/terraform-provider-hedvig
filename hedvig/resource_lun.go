@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+        "errors"
 )
 
 type LunResponse struct {
@@ -92,6 +93,10 @@ func resourceLunRead(d *schema.ResourceData, meta interface{}) error {
 	if err != nil {
 		log.Fatal(err)
 	}
+        if resp.StatusCode == 404 {
+		d.SetId("")
+		log.Print("Lun not found, removing from state")
+	}
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		log.Fatal(err)
@@ -103,6 +108,10 @@ func resourceLunRead(d *schema.ResourceData, meta interface{}) error {
 	if err != nil {
 		log.Fatalf("Error unmarshalling: %s", err)
 	}
+
+        if len(lun.Result.TargetLocations) < 0 {
+                errors.New("Insufficient Virtual Disk Details returned")
+        }
 
 	d.Set("controller", strings.Split(lun.Result.TargetLocations[0], ":")[0])
 
