@@ -1,9 +1,15 @@
 package hedvig
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io/ioutil"
+	"net/http"
+	"net/url"
 	"os"
+	//"log"
+	//"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform/helper/resource"
@@ -11,10 +17,12 @@ import (
 )
 
 func TestAccHedvigVdisk(t *testing.T) {
+	namevdisk1 := genRandomVdiskName()
+
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckHedvigVdiskDestroy("hedvig_vdisk.test-vdisk1"),
+		CheckDestroy: testAccCheckHedvigVdiskDestroy(namevdisk1),
 		Steps: []resource.TestStep{
 			resource.TestStep{
 				Config: testAccHedvigVdiskConfig,
@@ -78,7 +86,73 @@ func testAccCheckHedvigVdiskDestroy(n string) resource.TestCheckFunc {
 				return fmt.Errorf("Found resource: %s", name)
 			}
 		}
-		return nil
+		u := url.URL{}
+		u.Host = "tfhashicorp1.external.hedviginc.com"
+		u.Path = "/rest/"
+		u.Scheme = "http"
+
+		q := url.Values{}
+		q.Set("request", fmt.Sprintf("{type:Login,category:UserManagement,params:{username:'%s',password:'%s',cluster:''}}", os.Getenv("HV_TESTUSER"), os.Getenv("HV_TESTPASS")))
+		u.RawQuery = q.Encode()
+
+		resp, err := http.Get(u.String())
+		if err != nil {
+			return err
+		}
+
+		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return err
+		}
+
+		login := LoginResponse{}
+		err = json.Unmarshal(body, &login)
+
+		if err != nil {
+			return err
+		}
+
+		if login.Status != "ok" {
+			return errors.New(login.Message)
+		}
+
+		sessionId := login.Result.SessionID
+
+		//return nil
+
+		q = url.Values{}
+		q.Set("request", fmt.Sprintf("{type:VirtualDiskDetails,category:VirtualDiskManagement,params{virtualDisk:'vDiskA'},sessionId:'%s'", sessionId))
+
+		u.RawQuery = q.Encode()
+		resp, err = http.Get(u.String())
+		if err != nil {
+			return err
+		}
+
+		body, err = ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return err
+		}
+
+		readResp := readDiskResponse{}
+
+		err = json.Unmarshal(body, &readResp)
+
+		if err != nil {
+			if e, ok := err.(*json.SyntaxError); ok {
+				return fmt.Errorf("syntax error at byte offset %d", e.Offset)
+			}
+			returnable := fmt.Errorf("response: %q", readResp)
+			return returnable
+		}
+
+		if readResp.Status == "warning" { // && strings.Contains(readResp.Message, "t be found") {
+			return nil
+		}
+		if readResp.Status == "ok" {
+			return errors.New("Vdisk still exists")
+		}
+		return nil //fmt.Errorf("Unknown error: %s", readResp.Status)
 	}
 }
 

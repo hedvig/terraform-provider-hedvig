@@ -40,6 +40,7 @@ type LoginResponse struct {
 	} `json:"result"`
 	RequestID string `json:"requestId"`
 	Type      string `json:"type"`
+	Message   string `json:"message"`
 	Status    string `json:"status"`
 }
 
