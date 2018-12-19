@@ -34,6 +34,8 @@ type readDiskResponse struct {
 		} `json:"size"`
 		DiskType string `json:"diskType"`
 	} `json:"result"`
+	Status  string `json:"status"`
+	Message string `json:"message"`
 }
 
 type updateDiskResponse struct {
