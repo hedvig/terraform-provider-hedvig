@@ -92,7 +92,7 @@ func testAccCheckHedvigVdiskDestroy(n string) resource.TestCheckFunc {
 		u.Scheme = "http"
 
 		q := url.Values{}
-		q.Set("request", fmt.Sprintf("{type:Login,category:UserManagement,params:{username:'%s',password:'%s',cluster:''}}", os.Getenv("HV_TESTUSER"), os.Getenv("HV_TESTPASS")))
+		q.Set("request", fmt.Sprintf("{type:Login,category:UserManagement,params:{userName:'%s',password:'%s',cluster:''}}", os.Getenv("HV_TESTUSER"), os.Getenv("HV_TESTPASS")))
 		u.RawQuery = q.Encode()
 
 		resp, err := http.Get(u.String())
