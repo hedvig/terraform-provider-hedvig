@@ -159,6 +159,12 @@ func resourceMountRead(d *schema.ResourceData, meta interface{}) error {
 		return err
 	}
 
+	if readResp.Status == "warning" && strings.HasSuffix(readResp.Message, "t be found") {
+		d.SetId("")
+		log.Printf("Mount %s not found, clearing from state", idSplit[1])
+		return nil
+	}
+
 	if readResp.Status != "ok" {
 		return fmt.Errorf("Error: %s", readResp.Message)
 	}

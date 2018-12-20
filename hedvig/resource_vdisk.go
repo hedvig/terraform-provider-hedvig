@@ -34,6 +34,8 @@ type readDiskResponse struct {
 		} `json:"size"`
 		DiskType string `json:"diskType"`
 	} `json:"result"`
+	Status  string `json:"status"`
+	Message string `json:"message"`
 }
 
 type updateDiskResponse struct {
@@ -177,7 +179,11 @@ func resourceVdiskRead(d *schema.ResourceData, meta interface{}) error {
 		return err
 	}
 
-	//TODO: check status == ok
+	if readResp.Status == "warning" && strings.HasSuffix(readResp.Message, "t be found") {
+		d.SetId("")
+		log.Printf("Vdisk %s not found, clearing from state", idSplit[1])
+		return nil
+	}
 
 	if readResp.Result.DiskType == "NFS_MASTER_DISK" {
 		d.Set("type", "NFS")

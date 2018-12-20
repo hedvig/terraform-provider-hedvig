@@ -22,8 +22,9 @@ type readAccessResponse struct {
 			Name string `json:"name"`
 		}
 	} `json:"result"`
-	Status string `json:"status"`
-	Type   string `json:"type"`
+	Status  string `json:"status"`
+	Message string `json:"status"`
+	Type    string `json:"type"`
 }
 
 type deleteAccessResponse struct {
@@ -160,6 +161,12 @@ func resourceAccessRead(d *schema.ResourceData, meta interface{}) error {
 
 	if err != nil {
 		return err
+	}
+
+	if readAccess.Status == "warning" && strings.HasPrefix(readAccess.Message, "t be found") {
+		d.SetId("")
+		log.Print("Access resource not found for vdisk, clearing from state")
+		return nil
 	}
 
 	for _, rec := range readAccess.Result {
