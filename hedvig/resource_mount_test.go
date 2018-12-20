@@ -75,12 +75,12 @@ func testAccCheckHedvigMountDestroy(n string) resource.TestCheckFunc {
 			}
 		}
 		u := url.URL{}
-		u.Host = "tfhashicorp1.external.hedvig.com"
+		u.Host = "tfhashicorp1.external.hedviginc.com"
 		u.Path = "/rest/"
 		u.Scheme = "http"
 
 		q := url.Values{}
-		q.Set("request", fmt.Sprintf("{type:Login,category:UserManagement,params:{username:'%s',password:'%s',cluster:''}}", os.Getenv("HV_TESSTUSER"), os.Getenv("HV_TESTPASS")))
+		q.Set("request", fmt.Sprintf("{type:Login,category:UserManagement,params:{userName:'%s',password:'%s',cluster:''}}", os.Getenv("HV_TESTUSER"), os.Getenv("HV_TESTPASS")))
 		u.RawQuery = q.Encode()
 
 		resp, err := http.Get(u.String())
@@ -104,7 +104,41 @@ func testAccCheckHedvigMountDestroy(n string) resource.TestCheckFunc {
 			return errors.New(login.Message)
 		}
 
-		//sessionId := login.Result.SessionID
+		sessionId := login.Result.SessionID
+
+		q = url.Values{}
+		q.Set("request", fmt.Sprintf("{type:ListExportedTargets,category:VirtualDiskManagement,params:{virtualDisk:'%s'},sessionId:'%s'}", n, sessionId))
+
+		u.RawQuery = q.Encode()
+		resp, err = http.Get(u.String())
+		if err != nil {
+			return err
+		}
+
+		body, err = ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return err
+		}
+
+		readResp := readMountResponse{}
+
+		err = json.Unmarshal(body, &readResp)
+
+		if err != nil {
+			if e, ok := err.(*json.SyntaxError); ok {
+				return fmt.Errorf("syntax error at byte offset %d", e.Offset)
+			}
+			returnable := fmt.Errorf("response: %q", readResp)
+			return returnable
+		}
+
+		if readResp.Status == "warning" {
+			//TODO: be more picky about warning type
+			return nil
+		}
+		if readResp.Status == "ok" {
+			return errors.New("Vdisk still exists")
+		}
 		return nil
 	}
 }

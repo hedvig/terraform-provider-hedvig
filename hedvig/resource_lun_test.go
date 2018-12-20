@@ -1,8 +1,12 @@
 package hedvig
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io/ioutil"
+	"net/http"
+	"net/url"
 	"os"
 	"testing"
 
@@ -70,6 +74,62 @@ func testAccCheckHedvigLunDestroy(n string) resource.TestCheckFunc {
 			if name == n {
 				return fmt.Errorf("Found resource: %s", name)
 			}
+		}
+		u := url.URL{}
+		u.Host = "tfhashicorp1.external.hedviginc.com"
+		u.Path = "/rest/"
+		u.Scheme = "http"
+
+		q := url.Values{}
+		q.Set("request", fmt.Sprintf("{type:Login,category:UserManagement,params:{userName:'%s',password:'%s',cluster:''}}", os.Getenv("HV_TESTUSER"), os.Getenv("HV_TESTPASS")))
+		u.RawQuery = q.Encode()
+
+		resp, err := http.Get(u.String())
+		if err != nil {
+			return err
+		}
+
+		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return err
+		}
+
+		login := LoginResponse{}
+		err = json.Unmarshal(body, &login)
+
+		if err != nil {
+			return err
+		}
+
+		if login.Status != "ok" {
+			return errors.New(login.Message)
+		}
+
+		sessionId := login.Result.SessionID
+
+		q = url.Values{}
+		q.Set("request", fmt.Sprintf("{type:VirtualDiskDetails,category:VirtualDiskManagement,params{virtualDisk:'%s'},sessionId:'%s'}", n, sessionId))
+
+		u.RawQuery = q.Encode()
+
+		resp, err = http.Get(u.String())
+		if err != nil {
+			return err
+		}
+
+		body, err = ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return err
+		}
+
+		readResp := readLunResponse{}
+		err = json.Unmarshal(body, &readResp)
+		if err != nil {
+			return err
+		}
+
+		if readResp.Status == "ok" {
+			return errors.New("Error: Lun still exists")
 		}
 		return nil
 	}
