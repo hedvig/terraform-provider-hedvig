@@ -111,6 +111,7 @@ func testAccCheckHedvigAccessDestroy(n string) resource.TestCheckFunc {
 				return fmt.Errorf("Found resource: %s", name)
 			}
 		}
-		return nil
+		u := url.URL{}
+		u.Host
 	}
 }
