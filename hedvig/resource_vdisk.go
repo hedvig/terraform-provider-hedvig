@@ -163,9 +163,7 @@ func resourceVdiskRead(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	if resp.StatusCode == 404 {
-		d.SetId("")
-		log.Print("Vdisk resource not found, clearing from state")
-		return nil
+		return errors.New("Malformed query; aborting")
 	}
 
 	body, err := ioutil.ReadAll(resp.Body)

@@ -8,7 +8,6 @@ import (
 	"log"
 	"net/http"
 	"net/url"
-	"strconv"
 	"strings"
 
 	"github.com/hashicorp/terraform/helper/schema"
@@ -142,10 +141,7 @@ func resourceMountRead(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	if resp.StatusCode == 404 {
-		d.SetId("")
-		s := strconv.Itoa(resp.StatusCode)
-		log.Print("Received " + s + ", removing resource from state")
-		return nil
+		return errors.New("Malformed query; aborting")
 	}
 
 	body, err := ioutil.ReadAll(resp.Body)

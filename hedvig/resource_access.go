@@ -147,9 +147,7 @@ func resourceAccessRead(d *schema.ResourceData, meta interface{}) error {
 		return err
 	}
 	if resp.StatusCode == 404 {
-		d.SetId("")
-		log.Print("Access resource not found for vdisk, clearing from state")
-		return nil
+		return errors.New("Malformed query; aborting")
 	}
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
@@ -163,7 +161,7 @@ func resourceAccessRead(d *schema.ResourceData, meta interface{}) error {
 		return err
 	}
 
-	if readAccess.Status == "warning" && strings.HasPrefix(readAccess.Message, "t be found") {
+	if readAccess.Status == "warning" && strings.HasSuffix(readAccess.Message, "t be found") {
 		d.SetId("")
 		log.Print("Access resource not found for vdisk, clearing from state")
 		return nil

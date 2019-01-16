@@ -152,9 +152,7 @@ func resourceLunRead(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	if readResp.Status == "warning" && strings.HasSuffix(readResp.Message, "t be found") {
-		d.SetId("")
-		log.Printf("Lun %s not found, clearing from state", idSplit[1])
-		return nil
+		return errors.New("Malformed query; aborting")
 	}
 
 	if readResp.Status != "ok" {
