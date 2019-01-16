@@ -135,9 +135,7 @@ func resourceLunRead(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	if resp.StatusCode == 404 {
-		d.SetId("")
-		log.Print("Lun resource not found in virtual disk, clearing from state")
-		return nil
+		return errors.New("Malformed query; aborting")
 	}
 
 	body, err := ioutil.ReadAll(resp.Body)
