@@ -23,6 +23,7 @@ type createMountResponse struct {
 		} `json:"exportInfo"`
 	} `json:"result"`
 	RequestID string `json:"requestId"`
+	Message	  string `json:"message"`
 	Type      string `json:"type"`
 	Status    string `json:"status"`
 }
@@ -33,6 +34,16 @@ type readMountResponse struct {
 	Type      string   `json:"type"`
 	Message   string   `json:"message"`
 	Status    string   `json:"status"`
+}
+
+type createNFSMountCheck struct {
+	Result []struct {
+		Protocol string `json:"protocol"`
+		Target string `json:"target"`
+	}
+	Status string `json:"status"`
+	Type string `json:"type"`
+	RequestId string `json:"requestId"`
 }
 
 type deleteMountResponse struct {
