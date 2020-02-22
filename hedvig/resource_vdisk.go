@@ -111,7 +111,7 @@ func resourceVdiskCreate(d *schema.ResourceData, meta interface{}) error {
 
 	q := url.Values{}
 	
-	        q.Set("request", fmt.Sprintf("{type:AddVirtualDisk, category:VirtualDiskManagement, params:{name:'%s', size:{unit:'GB', value:%d}, diskType:%s, residence:%s, scsi3pr:false}, sessionId:'%s'}", d.Get("name").(string), d.Get("size").(int), d.Get("type").(string), d.Get("residence"), sessionID))
+	q.Set("request", fmt.Sprintf("{type:AddVirtualDisk, category:VirtualDiskManagement, params:{name:'%s', size:{unit:'GB', value:%d}, diskType:%s, residence:%s, scsi3pr:false}, sessionId:'%s'}", d.Get("name").(string), d.Get("size").(int), d.Get("type").(string), d.Get("residence"), sessionID))
 	
 	u.RawQuery = q.Encode()
 	log.Printf("URL: %v", u.String())
