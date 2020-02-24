@@ -119,6 +119,46 @@ func resourceMountCreate(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	if createResp.Result.ExportInfo[0].Status != "ok" {
+                        q2 := url.Values{}
+                        q2.Set("request", fmt.Sprintf("{type:ListTargets, category:VirtualDiskManagement, sessionId:'%s'}", sessionID))
+
+                        u2 := url.URL{}
+                        u2.Host = meta.(*HedvigClient).Node
+                        u2.Path = "/rest/"
+                        u2.Scheme = "http"
+
+                        u2.RawQuery = q2.Encode()
+
+                        resp2, err2 := http.Get(u2.String())
+                        if err2 != nil {
+                                return err2
+                        }
+
+                        body2, err := ioutil.ReadAll(resp2.Body)
+                        if err != nil {
+                                return err
+                        }
+
+                        createResp2 := createNFSMountCheck{}
+                        err = json.Unmarshal(body2, &createResp2)
+                        if err != nil {
+                                return err
+                        }
+
+                        if len(createResp2.Result) < 1 {
+                                return errors.New("No controllers found")
+                        } else {
+                                for i := 0; i < len(createResp2.Result); i++ {
+                                        if createResp2.Result[i].Protocol != "nfs" {
+                                                continue
+                                        } else {
+                                                return fmt.Errorf("Given controller not NFS -- try %s", createResp2.Result[i].Target)
+                                        }
+                                }
+                                return fmt.Errorf("No NFS controllers available")
+                        }
+                }
+
 		return fmt.Errorf("Error creating export: %s", createResp.Result.ExportInfo[0].Message)
 	}
 
